@@ -1,0 +1,38 @@
+services:
+  dnsmasq:
+    build: ./dnsmasq
+    container_name: pxe-dnsmasq
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      DOCKER_HOST_IP: ${DOCKER_HOST_IP}
+      DHCP_RANGE_START: ${DHCP_RANGE_START}
+      DHCP_RANGE_END: ${DHCP_RANGE_END}
+      SUBNET_MASK: ${SUBNET_MASK}
+      LEASE_TIME: ${LEASE_TIME}
+      GATEWAY_IP: ${GATEWAY_IP}
+      DNS_SERVER: ${DNS_SERVER}
+    volumes:
+      - ./tftp:/tftp:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: nginx:alpine
+    container_name: pxe-nginx
+    network_mode: host
+    volumes:
+      - ./tftp:/usr/share/nginx/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

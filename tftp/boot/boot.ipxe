@@ -1,0 +1,80 @@
+#!ipxe
+
+# -----------------------------------------------------------------------
+# Edit these two variables to match your environment
+# -----------------------------------------------------------------------
+set base-url    http://DOCKER_HOST_IP
+set mdt-server  MDT_SERVER_IP
+# -----------------------------------------------------------------------
+
+set menu-timeout 30000
+set menu-default localboot
+
+:start
+menu PXE Boot -- ${hostname} (${ip})
+item --gap --                         ---- Windows ----
+item --key w windows                  [W] Windows (MDT deployment)
+item --gap --                         ---- Linux ----
+item --key u ubuntu-2204              [U] Ubuntu 22.04 LTS
+item --key d debian-12                [D] Debian 12 Bookworm
+item --gap --                         ---- Tools ----
+item --key l localboot                [L] Boot from local disk
+item --key s shell                    [S] iPXE shell
+choose --timeout ${menu-timeout} --default ${menu-default} target && goto ${target} || goto localboot
+
+# -----------------------------------------------------------------------
+# Windows — chainload to WDS on the MDT server
+# WDS takes over from here; MDT handles the deployment wizard in WinPE
+# -----------------------------------------------------------------------
+:windows
+  iseq ${platform} efi && goto windows-efi || goto windows-bios
+
+:windows-efi
+  echo Loading Windows boot manager (UEFI) from ${mdt-server} ...
+  chain tftp://${mdt-server}/Boot/x64/wdsmgfw.efi || goto boot-failed
+
+:windows-bios
+  echo Loading Windows boot manager (BIOS) from ${mdt-server} ...
+  chain tftp://${mdt-server}/Boot/x86/wdsnbp.com || goto boot-failed
+
+# -----------------------------------------------------------------------
+# Linux — kernel and initrd served directly from nginx
+# Add distro files under tftp/linux/<distro>/ on the Docker host
+# -----------------------------------------------------------------------
+:ubuntu-2204
+  echo Loading Ubuntu 22.04 LTS installer...
+  kernel ${base-url}/linux/ubuntu-22.04/vmlinuz \
+    root=/dev/ram0 \
+    initrd=initrd \
+    auto-install/enable=true \
+    priority=critical \
+    url=${base-url}/linux/ubuntu-22.04/preseed.cfg
+  initrd ${base-url}/linux/ubuntu-22.04/initrd
+  boot || goto boot-failed
+
+:debian-12
+  echo Loading Debian 12 Bookworm installer...
+  kernel ${base-url}/linux/debian-12/vmlinuz \
+    root=/dev/ram0 \
+    initrd=initrd.gz \
+    auto=true \
+    url=${base-url}/linux/debian-12/preseed.cfg
+  initrd ${base-url}/linux/debian-12/initrd.gz
+  boot || goto boot-failed
+
+# -----------------------------------------------------------------------
+:localboot
+  echo Booting from local disk...
+  exit 1
+
+:shell
+  echo Type 'exit' to return to the menu.
+  shell
+  goto start
+
+:boot-failed
+  echo
+  echo Boot failed. Is the target server reachable?
+  echo Press any key to return to the menu...
+  prompt
+  goto start
