@@ -29,14 +29,8 @@ tftp-root=/tftp
 # BIOS (arch 0)
 dhcp-match=set:bios,option:client-arch,0
 
-# UEFI 32-bit (arch 6)
-dhcp-match=set:efi32,option:client-arch,6
-
 # UEFI 64-bit (arch 7) — most modern hardware
 dhcp-match=set:efi64,option:client-arch,7
-
-# UEFI ARM64 (arch 11)
-dhcp-match=set:efi-arm64,option:client-arch,11
 
 # -----------------------------------------------------------------------
 # iPXE loop prevention
@@ -48,9 +42,7 @@ dhcp-userclass=set:ipxe,iPXE
 
 # Boot file selection (tag:!ipxe = client NOT yet running iPXE)
 dhcp-boot=tag:bios,tag:!ipxe,undionly.kpxe,pxeserver,${DOCKER_HOST_IP}
-dhcp-boot=tag:efi32,tag:!ipxe,ipxe32.efi,pxeserver,${DOCKER_HOST_IP}
 dhcp-boot=tag:efi64,tag:!ipxe,ipxe.efi,pxeserver,${DOCKER_HOST_IP}
-dhcp-boot=tag:efi-arm64,tag:!ipxe,ipxe-arm64.efi,pxeserver,${DOCKER_HOST_IP}
 
 # Once iPXE is running, hand it the menu script
 dhcp-boot=tag:ipxe,http://${DOCKER_HOST_IP}/boot/boot.ipxe

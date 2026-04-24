@@ -11,10 +11,8 @@ WIMBOOT_URL="https://github.com/ipxe/wimboot/releases/latest/download/wimboot"
 mkdir -p "${WIN_DIR}"
 
 echo "Downloading iPXE binaries..."
-curl -fL --progress-bar "${IPXE_BASE}/undionly.kpxe"      -o "${TFTP_DIR}/undionly.kpxe"
-curl -fL --progress-bar "${IPXE_BASE}/ipxe.efi"           -o "${TFTP_DIR}/ipxe.efi"
-curl -fL --progress-bar "${IPXE_BASE}/ipxe32.efi"         -o "${TFTP_DIR}/ipxe32.efi"
-curl -fL --progress-bar "${IPXE_BASE}/arm64-efi/ipxe.efi" -o "${TFTP_DIR}/ipxe-arm64.efi"
+curl -fL --progress-bar "${IPXE_BASE}/undionly.kpxe" -o "${TFTP_DIR}/undionly.kpxe"
+curl -fL --progress-bar "${IPXE_BASE}/ipxe.efi"      -o "${TFTP_DIR}/ipxe.efi"
 
 echo "Downloading wimboot..."
 curl -fL --progress-bar "${WIMBOOT_URL}" -o "${WIN_DIR}/wimboot"
