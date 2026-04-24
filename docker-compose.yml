@@ -15,7 +15,7 @@ services:
       GATEWAY_IP: ${GATEWAY_IP}
       DNS_SERVER: ${DNS_SERVER}
     volumes:
-      - ./tftp:/tftp:ro
+      - ./tftp:/tftp
     restart: unless-stopped
     logging:
       driver: json-file
