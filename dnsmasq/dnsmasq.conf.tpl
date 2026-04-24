@@ -1,4 +1,5 @@
-# Do not use system DNS
+# Disable DNS — we only need DHCP and TFTP
+port=0
 no-resolv
 no-poll
 
