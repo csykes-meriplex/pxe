@@ -1,10 +1,9 @@
 #!ipxe
 
 # -----------------------------------------------------------------------
-# Edit these two variables to match your environment
+# Edit this variable to match your environment
 # -----------------------------------------------------------------------
-set base-url    http://DOCKER_HOST_IP
-set mdt-server  MDT_SERVER_IP
+set base-url  http://DOCKER_HOST_IP
 # -----------------------------------------------------------------------
 
 set menu-timeout 30000
@@ -23,19 +22,17 @@ item --key s shell                    [S] iPXE shell
 choose --timeout ${menu-timeout} --default ${menu-default} target && goto ${target} || goto localboot
 
 # -----------------------------------------------------------------------
-# Windows — chainload to WDS on the MDT server
-# WDS takes over from here; MDT handles the deployment wizard in WinPE
+# Windows — wimboot loads LiteTouchPE directly; no WDS required.
+# Files live in tftp/windows/ on the Docker host (served via nginx).
+# Use scripts/copy-mdt-files.ps1 + scripts/pull-mdt-files.sh to populate.
 # -----------------------------------------------------------------------
 :windows
-  iseq ${platform} efi && goto windows-efi || goto windows-bios
-
-:windows-efi
-  echo Loading Windows boot manager (UEFI) from ${mdt-server} ...
-  chain tftp://${mdt-server}/Boot/x64/wdsmgfw.efi || goto boot-failed
-
-:windows-bios
-  echo Loading Windows boot manager (BIOS) from ${mdt-server} ...
-  chain tftp://${mdt-server}/Boot/x86/wdsnbp.com || goto boot-failed
+  echo Loading Windows PE (MDT) via wimboot...
+  kernel ${base-url}/windows/wimboot
+  initrd ${base-url}/windows/BCD                      BCD
+  initrd ${base-url}/windows/boot.sdi                 boot.sdi
+  initrd ${base-url}/windows/LiteTouchPE_x64.wim      boot.wim
+  boot || goto boot-failed
 
 # -----------------------------------------------------------------------
 # Linux — kernel and initrd served directly from nginx
